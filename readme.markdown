@@ -9,8 +9,8 @@ Thanks to eveilpie which code from the [javascript disassembler] (https://gist.g
 			
 Known issues:
 -------------
-*JSR not implemented yet
-*The online assemblers assemble this line "set a, 1" into 8401, that doesn't work right yet, instead use: 7c01 0001 
+* JSR not implemented yet
+* The online assemblers assemble this line "set a, 1" into 8401, that doesn't work right yet, instead use: 7c01 0001 
 
 What is DCPU-16?
 ================
