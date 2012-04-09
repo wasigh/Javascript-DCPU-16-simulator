@@ -3,9 +3,9 @@ Intro
 
 This is a javascript simulator of the DCPU-16 CPU as released by Notch in early April 2012. [The full spec can be found here.] (http://0x10c.com/doc/dcpu-16.txt)
 I tried to fully test the CPU. You can find the tests in:  tests.html
-The keyboard buffer spec is taken [from this example code released by Notch])(http://pastebin.com/raw.php?i=aJSkRMyC)
+The keyboard buffer spec is taken [from this example code released by Notch](http://pastebin.com/raw.php?i=aJSkRMyC)
 The screen spec is taken [from this example released by Notch.](http://i.imgur.com/XIXc4.jpg)
-Thanks to eveilpie which code from the [javascript disassembler] (https://gist.github.com/2300590") I use in some places. 
+Thanks to evilpie, the code from his [javascript disassembler] (https://gist.github.com/2300590") I use in some places. 
 			
 Known issues:
 -------------
