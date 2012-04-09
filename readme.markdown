@@ -15,7 +15,7 @@ Known issues:
 What is DCPU-16?
 ================
 		
-Recentlu Notch (of Minecraft fame) anounced his new game: [0x10c](http://0x10c.com/). It is a space game. In this game you control your ship via a computer. This computer is the dcpu-16 
+Recently Notch (of Minecraft fame) anounced his new game: [0x10c](http://0x10c.com/). It is a space game. In this game you control your ship via a computer. This computer is the dcpu-16 
 and is fully programmable. Notch released the spec and a lot of tools have been released in the days after. This is one such a tool.
 Primarly created for the fun 
 		
