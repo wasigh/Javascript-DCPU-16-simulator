@@ -1,0 +1,13 @@
+#cpu-screen
+{
+	border: solid 1px lightgrey;
+	border-collapse: collapse;
+}
+
+#cpu-screen td
+{
+	width: 10px;
+	height: 10px;
+	background-color: black;
+	color: white;
+}

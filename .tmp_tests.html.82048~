@@ -1,0 +1,333 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <title>CPU emulator</title>
+		<script src="http://code.jquery.com/jquery-1.7.2.min.js" type="application/javascript"></script>
+		<script src="cpu.js" type="application/javascript"> </script>
+		<script type="application/javascript">
+			
+			function testContext (){
+				this.testOk = true;
+				this.errors = [];
+			};
+			
+			
+			function test(inTitle, inTestFunction){
+				this.title = inTitle;
+				this.testFunction = inTestFunction;
+				
+			};
+			
+			testContext.prototype.assertEqual = function(expected, value, message)
+			{
+				if (expected != value)
+				{
+					this.testOk = false;
+					this.errors.push(message + " Expected: " + expected + " - value: " + value);
+				}
+			};
+			
+			var tests = [];
+			// TEST assembled with: http://alex.nisnevich.com/dcpu16-assembler/
+			
+			tests.push(new test("Set register A", function(testContext){
+				var aCpu = new cpu();
+				aCpu.loadProgram("7c01 0030");
+				aCpu.step();
+				
+				testContext.assertEqual(0x0030, aCpu.regA, "Register A should be set a correct value");
+			}));
+			
+			tests.push(new test("Set RAM ", function(testContext){
+				var aCpu = new cpu();
+				aCpu.loadProgram("7de1 1000 0020");
+				aCpu.step();
+				
+				testContext.assertEqual(0x0020, aCpu.ram[0x1000], "RAM 1000 should be set a correct value");
+			}));
+			
+			// substract simple values
+			tests.push(new test("Substract value from regA ", function(testContext){
+				var aCpu = new cpu();
+				// SET A, 0x30
+				// SUB A, 0x20
+				aCpu.loadProgram("7c01 0030 7c03 0020");
+				aCpu.run();
+				
+				
+				testContext.assertEqual(0x0010, aCpu.regA, "Register A should be set a correct value");
+			}));
+			
+			// substract simple values underflow
+			tests.push(new test("Substract value from regA underflow ", function(testContext){
+				var aCpu = new cpu();
+				// SET A, 0x20
+				// SUB A, 0x30
+				aCpu.loadProgram("7c01 0020 7c03 0030");
+				aCpu.run();
+				
+				
+				testContext.assertEqual(0xffff, aCpu.o, "Overflow register should be set");
+			}));
+			
+			
+			// substract simple values underflow
+			tests.push(new test("Substract value regA and RAM", function(testContext){
+				var aCpu = new cpu();
+				//SET A, 0x40
+				//SET [0x1000], 0x30
+				//SUB A, [0x1000]	
+				aCpu.loadProgram("7c01 0040 7de1 1000 0030 7803 1000");
+				aCpu.run();
+				
+				
+				testContext.assertEqual(0x0010, aCpu.regA, "Register should be correct when subtracted with RAM value");
+			}));
+			
+			// execueif not equal, should execute
+			tests.push(new test("IFN not ignore step", function(testContext){
+				var aCpu = new cpu();
+				//SET A, 0x40
+				//IFN A, 0x60              
+ 				//SET PC, 0x44		
+				aCpu.loadProgram("7c01 0040 7c0d 0060 7dc1 0044");
+				aCpu.step();
+				aCpu.step();
+				
+				testContext.assertEqual(0x0004, aCpu.pc, "program counter should not skip");
+			}));
+			
+			// execute if not equal, should not execute
+			tests.push(new test("IFN ignore step", function(testContext){
+				var aCpu = new cpu();
+				//SET A, 0x40
+				//IFN A, 0x40              
+ 				//SET PC, 0x44		
+				aCpu.loadProgram("7c01 0040 7c0d 0040 7dc1 0044");
+				aCpu.step();
+				aCpu.step();
+				
+				testContext.assertEqual(0x0005, aCpu.pc, "program counter should skip");
+			}));
+			
+			// test SET PC
+			tests.push(new test("setting value for PC", function(testContext){
+				var aCpu = new cpu();
+				              
+ 				//SET PC, 0x44		
+				aCpu.loadProgram("7dc1 0044");
+				aCpu.step();
+				
+				
+				testContext.assertEqual(0x0044, aCpu.pc, "program counter should be set");
+			}));
+			
+			// test add
+			tests.push(new test("Adding values no overflow", function(testContext){
+				var aCpu = new cpu();
+				              
+ 				//SET A, 0x40
+				//ADD A, 0x60   		
+				aCpu. loadProgram("7c01 0040 7c02 0060");
+				aCpu.run();
+				
+				testContext.assertEqual(0x00a0, aCpu.regA, "numbers should be added");
+			}));
+			
+			// test add
+			tests.push(new test("Adding values overflow", function(testContext){
+				var aCpu = new cpu();
+				              
+ 				//SET A, 0xFFFF
+				//ADD A, 0x0001   		
+				aCpu. loadProgram("7c01 FFFF 7c02 0002");
+				aCpu.run();
+				
+				testContext.assertEqual(0x0001, aCpu.o, "overflow should be set");
+			}));
+			
+			
+			// test multiply
+			tests.push(new test("Multiply values no overflow", function(testContext){
+				var aCpu = new cpu();
+				              
+ 				//SET A, 0x1234
+				//MUL A, 0x0002              
+  		
+				aCpu.loadProgram("7c01 1234 7c04 0002");
+				aCpu.run();
+				
+				testContext.assertEqual(0x0000, aCpu.o, "overflow should be set");
+				testContext.assertEqual(0x2468, aCpu.regA, "registerA should have correct value");
+			}));
+			
+			// test multiply
+			tests.push(new test("Multiply values overflow", function(testContext){
+				var aCpu = new cpu();
+				              
+ 				//SET A, 0xFFFF
+				//MUL A, 0x0020     		
+				aCpu.loadProgram("7c01 ffff 7c04 0020");
+				aCpu.run();
+				
+				testContext.assertEqual(0x001F, aCpu.o, "overflow should be set");
+				testContext.assertEqual(0xFFE0, aCpu.regA, "Register A should have correct value");
+			}));
+
+			// test division
+			tests.push(new test("regular division", function(testContext){
+				var aCpu = new cpu();
+				              
+ 				//SET A, 0x2468
+				//DIV A, 0x0002    		
+				aCpu.loadProgram("7c01 2468 7c05 0002");
+				aCpu.run()
+				
+				testContext.assertEqual(0x0000, aCpu.o, "overflow should not be set");
+				testContext.assertEqual(0x1234, aCpu.regA, "Register A should have correct value");
+			}));
+			
+			// test division
+			tests.push(new test("division by 0", function(testContext){
+				var aCpu = new cpu();
+				              
+ 				//SET A, 0x2468
+				//DIV A, 0x0000    		
+				aCpu.loadProgram("7c01 ffff 7c05 0000");
+				aCpu.run()
+				
+				testContext.assertEqual(0x0000, aCpu.o, "overflow should not be set");
+				testContext.assertEqual(0x0000, aCpu.regA, "Register A should be zero");
+			}));
+			
+			// test division
+			tests.push(new test("division with overflow", function(testContext){
+				var aCpu = new cpu();
+				              
+ 				//SET A, 0x0003
+				//DIV A, 0x0002    		
+				aCpu.loadProgram("7c01 0003 7c05 0002");
+				aCpu.run()
+				
+				testContext.assertEqual(0x8000, aCpu.o, "overflow should be set");
+				testContext.assertEqual(0x0001, aCpu.regA, "Register A should be one");
+			}));
+			
+			// test MOD
+			tests.push(new test("Modulo with 0 division", function(testContext){
+				var aCpu = new cpu();
+				              
+ 				//SET A, 0x0007
+				//MOD A, 0x0000    		
+				aCpu.loadProgram("7c01 0007 7c06 0000");
+				aCpu.run()
+				
+				testContext.assertEqual(0x0000, aCpu.o, "overflow should be set");
+				testContext.assertEqual(0x000, aCpu.regA, "Register A should be zero");
+			}));
+			
+			// test MOD
+			tests.push(new test("standard modulo", function(testContext){
+				var aCpu = new cpu();
+				              
+ 				//SET A, 0x0007
+				//MOD A, 0x0002    		
+				aCpu.loadProgram("7c01 0007 7c06 0002");
+				aCpu.run()
+				
+				testContext.assertEqual(0x0000, aCpu.o, "overflow should be set");
+				testContext.assertEqual(0x0001, aCpu.regA, "Register A should be one");
+			}));
+
+			// TEST SHL
+			tests.push(new test("standard SHL", function(testContext){
+				var aCpu = new cpu();
+				              
+ 				//SET A, 0x030
+				//SHL A, 4       		
+				aCpu.loadProgram("7c01 0030 9007");
+				aCpu.run()
+				
+				testContext.assertEqual(0x0300, aCpu.regA, "Register A should be 0x0300");
+			}));
+			
+			// TEST SHL
+			tests.push(new test("SHL overflow", function(testContext){
+				var aCpu = new cpu();
+				              
+ 				//SET A, 0x3000
+				//SHL A, 4       		
+				aCpu.loadProgram("7c01 3000 9007");
+				aCpu.run()
+				
+				testContext.assertEqual(0x0000, aCpu.regA, "Register A should be zero");
+				testContext.assertEqual(0x0003, aCpu.o, "overflow should be 3");
+			}));
+			
+			// TEST SHR
+			tests.push(new test("standard SHR", function(testContext){
+				var aCpu = new cpu();
+				              
+ 				//SET A, 0x030
+				//SHR A, 4       		
+				aCpu.loadProgram("7c01 0030 9008");
+				aCpu.run()
+				
+				testContext.assertEqual(0x0003, aCpu.regA, "Register A should be 0x0003");
+			}));
+			
+			// TEST SHR
+			tests.push(new test("SHR overflow", function(testContext){
+				var aCpu = new cpu();
+				              
+ 				//SET A, 0x3000
+				//SHR A, 6       		
+				aCpu.loadProgram("7c01 3000 9808");
+				aCpu.run()
+				
+				testContext.assertEqual(0x00C0, aCpu.regA, "Register A should be 192");
+				testContext.assertEqual(0x0000, aCpu.o, "overflow should be 0xC000");
+			}));
+
+			
+			$(document).ready(function()
+			{
+				
+				$(tests).each(function(index, item)
+				{	
+					
+					var $button = $("<button>");
+					$button.text("Run test: " +item.title);
+					$button.click(function(){
+						var tc = new testContext();
+						item.testFunction(tc);
+						if (tc.testOk) {
+							$(this).css("background-color", "green");
+						}
+						else {
+							$(this).css("background-color", "red");
+							$ul = $("<ul>");
+							$(tc.errors).each(function(index, item){
+								$li = $("<li>");
+								$li.text(item);
+								$ul.append($li);
+							});
+							$(this).append($ul);
+							
+						}
+					});
+					
+					
+					$("#tests").append($button);
+				});
+			});
+			
+			
+		</script>
+    </head>
+    <body>
+    	<div id="tests"></div>
+    </body>
+</html>
