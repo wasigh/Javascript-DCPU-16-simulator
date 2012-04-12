@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-        <title>DCPU-16 simulator tests</title>
+        <title>CPU emulator</title>
 		<script src="http://code.jquery.com/jquery-1.7.2.min.js" type="application/javascript"></script>
 		<script src="cpu.js" type="application/javascript"> </script>
 		<script type="application/javascript">
@@ -34,60 +34,11 @@
 			
 			tests.push(new test("Set register A", function(testContext){
 				var aCpu = new cpu();
-				
 				aCpu.loadProgram("7c01 0030");
 				aCpu.step();
 				
 				testContext.assertEqual(0x0030, aCpu.regA, "Register A should be set a correct value");
 			}));
-			
-			
-			
-			tests.push(new test("Set register A literal", function(testContext){
-				var aCpu = new cpu();
-				
-				aCpu.loadProgram("8401 7c01 0030");
-				aCpu.step();
-				
-				testContext.assertEqual(0x0001, aCpu.regA, "Register A should be set a correct value");
-				aCpu.step();
-				
-				testContext.assertEqual(0x0030, aCpu.regA, "Register A should be set a correct value");
-			}));
-			
-			
-			tests.push(new test("Set register A value 1", function(testContext){
-				var aCpu = new cpu();
-				//SET A, 1
-				//SET B, A
-				//SET A, 40
-				aCpu.loadProgram("8401 0011 7c01 0028");
-				aCpu.step();
-				
-				testContext.assertEqual(0x0001, aCpu.regA, "Register A should be set a correct value");
-				aCpu.step();
-				testContext.assertEqual(0x0001, aCpu.regB, "Register B should be set a correct value");
-				aCpu.step();
-				
-				testContext.assertEqual(40, aCpu.regA, "Register A should be set a correct value");
-			}));
-			
-			tests.push(new test("Assigning to literal should fail silently", function(testContext)
-			{
-				var aCpu = new cpu();
-				aCpu.ram[0x8000] = 0
-				aCpu.ram[0x8001] = 0
-				//SET 8000, 41 ; try to write 41 to the literal 8000, should fail leaving the memory unmodified
-				//SET [8001], [8000] ; read the memory location 8000 and write that value to memory location 8001
-				aCpu.loadProgram("7df1 8000 0041 79E1 8001 8000");
-				aCpu.step();
-				
-				testContext.assertEqual(0x0000, aCpu.ram[0x8000], "ram[8000] should still be 0");
-				aCpu.step();
-				testContext.assertEqual(0x0000, aCpu.ram[0x8001], "ram[8001] should still be 0");
-			}));
-			
-			
 			
 			tests.push(new test("Set RAM ", function(testContext){
 				var aCpu = new cpu();

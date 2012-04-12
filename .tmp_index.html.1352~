@@ -1,0 +1,269 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <title>javascript DCPU-16 simulator</title>
+		<script src="http://code.jquery.com/jquery-1.7.2.min.js" type="application/javascript"></script>
+		<script src="cpu.js" type="application/javascript"> </script>
+		<script src="screen.js" type="application/javascript"> </script>
+		<link href="screen.css" media="screen" rel="stylesheet" type="text/css" />
+		<script type="application/javascript">
+			
+			var cpu = new cpu();
+			// assuming this printscreen: http://i.imgur.com/XIXc4.jpg display memory starts at 0x8000
+			// and display is something like 15 x 30
+			var screen = new screen(0x8000, 15, 30);
+			cpu.debug = function()
+			{
+				
+				setValue("#regA", cpu.regA);
+				setValue("#regB", cpu.regB);
+				setValue("#regC", cpu.regC);
+				setValue("#regX", cpu.regX);
+				setValue("#regY", cpu.regY);
+				setValue("#regZ", cpu.regZ);
+				setValue("#regI", cpu.regI);
+				setValue("#regJ", cpu.regJ);
+				
+				setValue("#SP", cpu.sp);
+				setValue("#PC", cpu.pc);
+				setValue("#O", cpu.o);
+				
+				setInputValue("#keyboardbuffer", cpu.keyboardBuffer);
+				
+				screen.update(cpu);
+				
+				
+			};
+			cpu.linePrinter = function(pc, line)
+			{
+				ulLinePrinter = $("#linePrinter");
+				liList = $("#linePrinter > li").css("background-color", "white");	
+				
+				liLine = $("#" + pc, ulLinePrinter);
+				if (liLine.text() != "")
+				{
+					liLine.css("background-color", "lightgrey");
+					liLine.text(line);
+				}
+				else
+				{
+					liLine = $("<li>");
+					liLine.attr("id", pc);
+					liLine.text(line);
+					liLine.css("background-color", "lightgrey");
+					ulLinePrinter.append(liLine);
+				}
+			}
+			
+			//cpu.loadProgram("7c01 0030 7de1 1000 0020 7803 1000 c00d 7dc1 001a a861 7c01 2000 2161 2000 8463 806d 7dc1 000d 9031 7c10 0018 7dc1 001a 9037 61c1 7dc1 001a 0000 0000 0000 0000");
+			//document.write(cpu.program);
+			
+			nextStep = function()
+			{
+				cpu.step();
+			}
+			
+			runProgram = function()
+			{
+				cpu.run();
+			}
+			
+			loadProgram = function()
+			{
+				var code = $("#code").val();
+				cpu.loadProgram(code);
+				cpu.pc = 0;
+				
+				$("#btnStep").attr("disabled", false);
+			}
+			
+			setValue = function(id, value)
+			{
+				currentValue = $(id).text();
+				color = "white";
+				if (value != currentValue)
+					color = "lightgrey";
+					
+				$(id).css("background-color", color);
+				$(id).text(value);
+			}
+			
+			setInputValue = function(id, value)
+			{
+				currentValue = $(id).val();
+				color = "white";
+				if (value != currentValue)
+					color = "lightgrey";
+					
+				$(id).css("background-color", color);
+				$(id).val(value);
+			}
+			
+			updateKeyBuffer = function(event)
+			{
+				key = String.fromCharCode(event.which);
+				console.log(key);
+				
+				cpu.keyboardBuffer += key;
+			}
+			
+			$(document).ready(function()
+			{
+				screenDiv = $("#screen");
+				
+				screen.init(screenDiv);
+			});
+			
+		</script>
+		
+		<style>
+			body{
+				font-family: Verdana, Geneva, Arial, Helvetica, sans-serif;
+				font-size: smaller;
+			}	
+			
+		
+		
+			
+			#codeblock
+			{
+				display: inline-block;
+				float: left;
+				clear:left;
+			}
+			
+			
+			/* the div containing the register tables */
+			#registers
+			{
+				display: inline-block;
+				float: left;
+			}
+			
+			#registers table
+			{
+				display: inline-block;
+				border: 1px solid grey;
+			}
+			
+			/* div containing the lines */
+			#lines
+			{
+				display: inline-block;
+				float:right;
+				min-width: 300px;
+			}
+			
+			/* IO */
+			#IO
+			{
+				clear:left;	
+			}
+		</style>
+    </head>
+    <body>
+    	
+		
+		
+        <h1>Javascript DCPU-16 Simulator:</h1>
+		
+		<div id="intro1">
+			<h3>How does it work?</h3>
+			<dl>
+				<li>Enter a program in the textbox (I used this assembler: <a href="http://alex.nisnevich.com/dcpu16-assembler/">http://alex.nisnevich.com/dcpu16-assembler/</a>)</li>
+				<li>Click: "load program"</li>
+				<li>Click: "step" for a single step.</li>
+			</dl> 
+			 
+		</div>
+		<div id="codeblock">
+			
+			<a href="#" onclick="$('#code').val('7c01 0030 7de1 1000 0020 7803 1000 c00d 7dc1 001a a861 7c01 2000 2161 2000 8463 806d 7dc1 000d 9031 7c10 0018 7dc1 001a 9037 61c1 7dc1 001a 0000 0000 0000 0000')">Notch's example</a> 
+			<a href="#" onclick="$('#code').val('7df1 8000 0041 7df1 8001 0042 7df1 8002 0043 7df1 8003 0044')">Display test</a>
+			<a href="#" onclick="$('#code').val('7c01 8000 7821 9000 802c 7dc1 0002 0881 7df1 9000 0000 8402 7dc1 0002'); cpu.keyboardBuffer ='Hello world';">Keyboard and display test</a>
+			<h2>Code:</h2>
+			<textarea id="code" style="width:260px; height:100px"></textarea>
+			<br />
+			<button onClick = "javascript:loadProgram()">Load Program</button>
+			
+			<button  id="btnStep" onClick="javascript:nextStep()" disabled="disabled">Step</button>
+			<!--<button onClick = "javascript:runProgram()">Run</button>-->
+		</div>
+		
+		<div id="registers">
+			<h2>Registers:</h2>
+		<table>
+    		<tr>
+    			<td>A</td>
+				<td>B</td>
+				<td>C</td>
+				<td>X</td>
+				<td>Y</td>
+				<td>Z</td>
+				<td>I</td>
+				<td>J</td>
+			
+    		</tr>
+			<tr>
+    			<td id="regA">0</td>
+				<td id="regB">0</td>
+				<td id="regC">0</td>
+				<td id="regX">0</td>
+				<td id="regY">0</td>
+				<td id="regZ">0</td>
+				<td id="regI">0</td>
+				<td id="regJ">0</td>
+    		</tr>
+    	</table>
+		
+		
+		<table>
+    		<tr>
+    			<td>PC</td>
+				<td>SP</td>
+				<td>O</td>
+				
+    		</tr>
+			<tr>
+    			<td id="PC">0</td>
+				<td id="SP">0</td>
+				<td id="O">0</td>
+				
+    		</tr>
+    	</table>
+		</div>
+		
+		<div id="lines">
+			<h2>executing lines:</h2>
+			<ul id="linePrinter"></ul>
+		</div>
+		
+		<div id="IO">
+			<h2>Keyboard buffer</h2>
+			<input type="text" id="keyboardbuffer" onKeyUp="javascript:updateKeyBuffer(event);" />
+			<h2>Screen</h2>
+			<div id="screen"/>
+			
+		</div>
+		
+		<div id="intro2">
+			<h2>Intro</h2>
+			This is a javascript simulator of the DCPU-16 CPU as released by Notch in early April 2012. <a href="http://0x10c.com/doc/dcpu-16.txt">The full spec can be found here</a>.<br />
+			I tried to fully test the CPU. You can <a href="tests.html">run the tests here</a><br />
+			The keyboard buffer spec is taken <a href="http://pastebin.com/raw.php?i=aJSkRMyC">from this example code released by Notch.</a><br />
+			The screen spec is taken <a href="http://i.imgur.com/XIXc4.jpg">from this example released by Notch.</a><br />
+			Thanks to eveilpie which code from the <a href="https://gist.github.com/2300590">javascript disassembler</a> I use in some places. <br />
+			
+			<h3>Known issues:</h3>
+			<ul>
+				<li>JSR not implemented yet</li>
+				<li>The online assemblers assemble this line "set a, 1" into 8401, that doesn't work right yet, instead use: 7c01 0001 </li>
+			</ul>
+			
+			Find this code on github here: <a href="https://github.com/wasigh/Javascript-DCPU-16-simulator">https://github.com/wasigh/Javascript-DCPU-16-simulator</a>
+		</div>
+		
+    </body>
+</html>

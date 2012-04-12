@@ -168,7 +168,7 @@ cpu.prototype.readValue = function (bits) {
 				return this.program[++this.pc];
 			case 0x1f:
 				/* literal */
-				return this.program[++this.pc]
+				return this.program[++this.pc];
 		}
 		/* literal */
 		return (bits - 0x20);
@@ -223,7 +223,9 @@ cpu.prototype.writeValue = function (bits, value) {
 					break;
 				case 0x1f:
 					/* literal */
-					this.program[++this.pc] = value;
+					// setting literal should be ignored
+					// increase program counter
+					this.pc++;
 					break;
 			}
 		}
@@ -327,6 +329,9 @@ cpu.prototype.handleBasicOp= function(op, a, b)
 cpu.prototype.handleSetOp = function(a, b)
 {
 	var aValue = this.readTargetValue(a);
+
+	if (a == 0x1f) // read literal
+		aValue = a;
 	
 	var bValue = this.readValue(b);
 	this.writeValue(aValue,bValue);
@@ -528,6 +533,18 @@ cpu.prototype.handleIfbOp = function(a, b)
 	
 	if ((aValue & bValue) == 0)
 		this.ignoreNextStep();
+}
+
+
+// JSR
+cpu.prototype.handleJSROp = function(a, b)
+{
+	//var aTargetValue = this.readTargetValue(a);
+	//var aValue = this.readValue(a);
+	//var bValue = this.readValue(b);
+	
+	//if ((aValue & bValue) == 0)
+	//	this.ignoreNextStep();
 }
 
 cpu.prototype.ignoreNextStep = function()
